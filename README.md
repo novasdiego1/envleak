@@ -2,10 +2,11 @@
 
 **Find your exposed API keys before someone else does.**
 
-One command. No config. Nothing ever leaves your machine.
+One command. No config. No dependencies. Nothing ever leaves your machine.
 
 ```bash
-pipx run envleak
+pip install envleak-cli
+envleak
 ```
 
 ```
@@ -34,28 +35,43 @@ pipx run envleak
 
 ---
 
-## Why another secret scanner?
+## Why this one?
 
-There are good ones already — `gitleaks` and `trufflehog` scan git history
-and belong in your CI pipeline. `envleak` is for a different moment: **right
-now, on your laptop, in ten seconds, with a grade you can screenshot.**
+There are plenty of secret scanners, and several are excellent. `gitleaks` and
+`trufflehog` scan git history and belong in your CI pipeline. `keyleak-detector`
+does deep runtime analysis of web apps, with a browser crawler and live key
+validation.
 
-Two things it does that the others don't:
+`envleak` is deliberately the opposite of all of them:
 
-**1. It scans the agent surface.** Everyone is shipping AI agents in 2026,
-and the credentials moved with them — MCP server configs, `claude_desktop_config.json`,
-n8n and LangGraph workflows, notebooks, LLM provider keys pasted into JSON.
-`envleak` knows what an OpenAI, Anthropic, Groq, LangSmith or Hugging Face key
-looks like and where agent tooling hides them.
+**It does one thing, in ten seconds, with nothing installed but itself.**
+Zero dependencies. Zero network calls. Around 600 lines of Python you can read
+in one sitting. You run it in a directory, it hands you a grade, you fix what's
+red. That's the whole product.
 
-**2. It gives you a grade, not a JSON dump.** A 400-line report gets closed.
-An `F` gets fixed.
+**It gives you a grade, not a JSON dump.** A 400-line report gets closed. An `F`
+gets fixed. The scorecard is redacted, so it's safe to screenshot and paste into
+a PR or a team channel.
+
+**It knows where agent tooling hides credentials.** MCP server configs,
+`claude_desktop_config.json`, n8n and LangGraph workflows, notebooks, LLM
+provider keys pasted into JSON — plus the OpenAI, Anthropic, Groq, LangSmith,
+Mistral and Hugging Face key formats themselves.
+
+If you need git history, browser runtime analysis, or live key validation, use
+one of the tools above. They're better at that. This one is for the ten seconds
+before you push.
 
 ## Install
 
 ```bash
-pipx run envleak          # no install, just run it
-pip install envleak       # or keep it around
+pip install envleak-cli     # the command is `envleak`
+```
+
+Or run it without installing:
+
+```bash
+pipx run --spec envleak-cli envleak
 ```
 
 Python 3.8+. Zero dependencies.
@@ -74,7 +90,7 @@ envleak --json            # machine-readable, for pipelines
 Exits `1` when it finds anything `high` or worse:
 
 ```yaml
-- run: pipx run envleak --fail-on critical
+- run: pipx run --spec envleak-cli envleak --fail-on critical
 ```
 
 ```bash
@@ -98,7 +114,7 @@ by git.**
 This is a security tool, so the guarantee matters more than the feature list:
 
 - **It makes no network calls.** None. Read the source — it's a few hundred
-  lines with zero dependencies.
+  lines with zero dependencies, so verifying that claim takes minutes, not trust.
 - **Secrets are redacted in output.** You see `sk-a********o9Pq`, never the
   full key, so a screenshot is safe to post.
 - Nothing is written anywhere except stdout.
@@ -120,6 +136,9 @@ with the pattern — that feedback is the whole roadmap.
 `envleak` scans your **working tree**, not git history. If a key was committed
 and later deleted, it's still in your history and still compromised — use
 `trufflehog` for that, and rotate the key regardless.
+
+It does static pattern matching. It does not validate whether a key is still
+live, and it will miss credentials that don't look like credentials.
 
 Finding a key is step one. **Rotate it.** A key that appeared in this scan
 should be considered burned.
